@@ -51,6 +51,30 @@ public class ProtocolFilterWrapper implements Protocol {
         this.protocol = protocol;
     }
 
+    /**
+     * 构建过滤器责任链
+     *
+     * 提供者参与责任链构建的过滤器如下
+     * echo=org.apache.dubbo.rpc.filter.EchoFilter
+     * classloader=org.apache.dubbo.rpc.filter.ClassLoaderFilter
+     * generic=org.apache.dubbo.rpc.filter.GenericFilter
+     * context=org.apache.dubbo.rpc.filter.ContextFilter
+     * trace=org.apache.dubbo.rpc.protocol.dubbo.filter.TraceFilter
+     * timeout=org.apache.dubbo.rpc.filter.TimeoutFilter
+     * monitor=org.apache.dubbo.monitor.support.MonitorFilter
+     * exception=org.apache.dubbo.rpc.filter.ExceptionFilter
+     *
+     * 消费者参与责任链构建的过滤器如下
+     * consumercontext=org.apache.dubbo.rpc.filter.ConsumerContextFilter
+     * future=org.apache.dubbo.rpc.protocol.dubbo.filter.FutureFilter
+     * monitor=org.apache.dubbo.monitor.support.MonitorFilter
+     *
+     * @param invoker
+     * @param key
+     * @param group
+     * @param <T>
+     * @return
+     */
     private static <T> Invoker<T> buildInvokerChain(final Invoker<T> invoker, String key, String group) {
         Invoker<T> last = invoker;
         List<Filter> filters = ExtensionLoader.getExtensionLoader(Filter.class).getActivateExtension(invoker.getUrl(), key, group);

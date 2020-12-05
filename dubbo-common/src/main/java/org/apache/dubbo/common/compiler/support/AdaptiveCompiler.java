@@ -39,7 +39,9 @@ public class AdaptiveCompiler implements Compiler {
         String name = DEFAULT_COMPILER; // copy reference
         if (name != null && name.length() > 0) {
             compiler = loader.getExtension(name);
-        } else {
+        }
+        // 默认为 JavassistCompiler
+        else {
             compiler = loader.getDefaultExtension();
         }
         return compiler.compile(code, classLoader);
