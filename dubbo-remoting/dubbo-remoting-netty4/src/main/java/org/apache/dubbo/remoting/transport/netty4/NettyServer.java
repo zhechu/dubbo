@@ -86,6 +86,7 @@ public class NettyServer extends AbstractServer implements RemotingServer {
     protected void doOpen() throws Throwable {
         bootstrap = new ServerBootstrap();
 
+        // 设置 boss 和 worker 线程池
         bossGroup = NettyEventLoopFactory.eventLoopGroup(1, "NettyServerBoss");
         workerGroup = NettyEventLoopFactory.eventLoopGroup(
                 getUrl().getPositiveParameter(IO_THREADS_KEY, Constants.DEFAULT_IO_THREADS),

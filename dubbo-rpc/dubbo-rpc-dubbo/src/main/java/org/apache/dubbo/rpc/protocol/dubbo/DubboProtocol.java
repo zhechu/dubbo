@@ -283,6 +283,7 @@ public class DubboProtocol extends AbstractProtocol {
 
         // export service.
         String key = serviceKey(url);
+        // 将Invoker转换为DubboExporter对象，并且把DubboExporter保存到了缓存exporterMap（在服务提供方处理请求时会从中获取出来）
         DubboExporter<T> exporter = new DubboExporter<T>(invoker, key, exporterMap);
         exporterMap.put(key, exporter);
 
@@ -327,6 +328,7 @@ public class DubboProtocol extends AbstractProtocol {
         }
     }
 
+    // 创建 Server
     private ProtocolServer createServer(URL url) {
         url = URLBuilder.from(url)
                 // send readonly event when server closes, it's enabled by default

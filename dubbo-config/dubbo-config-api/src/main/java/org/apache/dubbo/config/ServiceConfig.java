@@ -196,6 +196,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         serviceMetadata.setServiceInterfaceName(getInterface());
         serviceMetadata.setTarget(getRef());
 
+        // 判断是否需延迟发布
         if (shouldDelay()) {
             DELAY_EXPORT_EXECUTOR.schedule(this::doExport, getDelay(), TimeUnit.MILLISECONDS);
         } else {
@@ -308,6 +309,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                 serviceMetadata
         );
 
+        // 加载所有的服务注册中心对象，在Dubbo中，一个服务可以被注册到多个服务注册中心
         List<URL> registryURLs = ConfigValidationUtils.loadRegistries(this, true);
 
         for (ProtocolConfig protocolConfig : protocols) {
@@ -341,6 +343,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
         AbstractConfig.appendParameters(map, protocolConfig);
         AbstractConfig.appendParameters(map, this);
         if (CollectionUtils.isNotEmpty(getMethods())) {
+            // 解析MethodConfig对象设置的方法级别的配置并保存到参数map中
             for (MethodConfig method : getMethods()) {
                 AbstractConfig.appendParameters(map, method, method.getName());
                 String retryKey = method.getName() + ".retry";
@@ -396,6 +399,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             } // end of methods for
         }
 
+        // 判断调用类型，如果为泛型调用，则设置泛型类型（true、nativejava或bean方式）
         if (ProtocolUtils.isGeneric(generic)) {
             map.put(GENERIC_KEY, generic);
             map.put(METHODS_KEY, ANY_VALUE);
@@ -443,6 +447,10 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                     .getExtension(url.getProtocol()).getConfigurator(url).configure(url);
         }
 
+        // 导出服务，Dubbo服务导出分本地导出与远程导出，
+        // 本地导出使用了injvm协议，是一个伪协议，它不开启端口，不发起远程调用，只在JVM内直接关联，但执行Dubbo的Filter链；
+        // 在默认情况下，Dubbo同时支持本地导出与远程导出协议，可以通过ServiceConfig的setScope（）方法设置，
+        // 其中配置为none表示不导出服务，为remote表示只导出远程服务，为local表示只导出本地服务
         String scope = url.getParameter(SCOPE_KEY);
         // don't export when none is configured
         if (!SCOPE_NONE.equalsIgnoreCase(scope)) {
@@ -453,6 +461,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
             }
             // export to remote if the config is not local (export to local only when config is local)
             if (!SCOPE_LOCAL.equalsIgnoreCase(scope)) {
+                // 若有注册中心地址
                 if (CollectionUtils.isNotEmpty(registryURLs)) {
                     for (URL registryURL : registryURLs) {
                         //if protocol is only injvm ,not register
@@ -481,6 +490,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                         Invoker<?> invoker = PROXY_FACTORY.getInvoker(ref, (Class) interfaceClass, registryURL.addParameterAndEncoded(EXPORT_KEY, url.toFullString()));
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
 
+                        // 服务提供端导出服务
                         Exporter<?> exporter = PROTOCOL.export(wrapperInvoker);
                         exporters.add(exporter);
                     }
@@ -491,6 +501,7 @@ public class ServiceConfig<T> extends ServiceConfigBase<T> {
                     Invoker<?> invoker = PROXY_FACTORY.getInvoker(ref, (Class) interfaceClass, url);
                     DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
 
+                    // 服务提供端导出服务
                     Exporter<?> exporter = PROTOCOL.export(wrapperInvoker);
                     exporters.add(exporter);
                 }

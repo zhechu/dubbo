@@ -178,6 +178,7 @@ public class ConfigValidationUtils {
                     address = ANYHOST_VALUE;
                 }
                 if (!RegistryConfig.NO_AVAILABLE.equalsIgnoreCase(address)) {
+                    // map 临时保持参数
                     Map<String, String> map = new HashMap<String, String>();
                     AbstractConfig.appendParameters(map, application);
                     AbstractConfig.appendParameters(map, config);
@@ -186,6 +187,7 @@ public class ConfigValidationUtils {
                     if (!map.containsKey(PROTOCOL_KEY)) {
                         map.put(PROTOCOL_KEY, DUBBO_PROTOCOL);
                     }
+                    // 解析地址和参数，封装为 URL 对象
                     List<URL> urls = UrlUtils.parseURLs(address, map);
 
                     for (URL url : urls) {
