@@ -141,8 +141,11 @@ public class DubboProtocol extends AbstractProtocol {
                     return null;
                 }
             }
+            // 获取上下文对象并设置对端地址
             RpcContext.getContext().setRemoteAddress(channel.getRemoteAddress());
             Result result = invoker.invoke(inv);
+
+            // 写回结果
             return result.thenApply(Function.identity());
         }
 
@@ -170,6 +173,7 @@ public class DubboProtocol extends AbstractProtocol {
         }
 
         private void invoke(Channel channel, String methodKey) {
+            // 创建 Invocation 对象
             Invocation invocation = createInvocation(channel, channel.getUrl(), methodKey);
             if (invocation != null) {
                 try {

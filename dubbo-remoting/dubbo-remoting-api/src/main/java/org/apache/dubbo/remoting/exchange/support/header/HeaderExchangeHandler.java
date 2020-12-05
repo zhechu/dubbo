@@ -97,9 +97,11 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
         // find handler by message class.
         Object msg = req.getData();
         try {
+            // 回复
             CompletionStage<Object> future = handler.reply(channel, msg);
             future.whenComplete((appResult, t) -> {
                 try {
+                    // 若请求已完成，则设置结果并写回
                     if (t == null) {
                         res.setStatus(Response.OK);
                         res.setResult(appResult);
@@ -171,13 +173,16 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
             if (request.isEvent()) {
                 handlerEvent(channel, request);
             } else {
+                // 需要有返回值的请求
                 if (request.isTwoWay()) {
                     handleRequest(exchangeChannel, request);
                 } else {
                     handler.received(exchangeChannel, request.getData());
                 }
             }
-        } else if (message instanceof Response) {
+        }
+        // 响应
+        else if (message instanceof Response) {
             handleResponse(channel, (Response) message);
         } else if (message instanceof String) {
             if (isClientSide(channel)) {
