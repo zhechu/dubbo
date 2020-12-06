@@ -37,6 +37,8 @@ import static org.apache.dubbo.rpc.protocol.dubbo.Constants.ASYNC_METHOD_INFO;
 
 /**
  * EventFilter
+ *
+ * 实现异步调用
  */
 @Activate(group = CommonConstants.CONSUMER)
 public class FutureFilter implements Filter, Filter.Listener {

@@ -413,14 +413,21 @@ public class DubboProtocol extends AbstractProtocol {
         return invoker;
     }
 
+    /**
+     * 创建服务消费端的NettyClient对象
+     * @param url
+     * @return
+     */
     private ExchangeClient[] getClients(URL url) {
         // whether to share connection
 
+        // 不同服务是否共享连接
         boolean useShareConnect = false;
 
         int connections = url.getParameter(CONNECTIONS_KEY, 0);
         List<ReferenceCountExchangeClient> shareClients = null;
         // if not configured, connection is shared, otherwise, one connection for one service
+        // 若没有配置，则默认是共享的，否则每个服务单独有自己的连接
         if (connections == 0) {
             useShareConnect = true;
 
@@ -430,15 +437,18 @@ public class DubboProtocol extends AbstractProtocol {
             String shareConnectionsStr = url.getParameter(SHARE_CONNECTIONS_KEY, (String) null);
             connections = Integer.parseInt(StringUtils.isBlank(shareConnectionsStr) ? ConfigUtils.getProperty(SHARE_CONNECTIONS_KEY,
                     DEFAULT_SHARE_CONNECTIONS) : shareConnectionsStr);
+            // 获取共享 NettyClient
             shareClients = getSharedClient(url, connections);
         }
 
+        // 初始化 client
         ExchangeClient[] clients = new ExchangeClient[connections];
         for (int i = 0; i < clients.length; i++) {
             if (useShareConnect) {
                 clients[i] = shareClients.get(i);
 
             } else {
+                // 创建新的 NettyClient
                 clients[i] = initClient(url);
             }
         }
@@ -591,10 +601,13 @@ public class DubboProtocol extends AbstractProtocol {
         ExchangeClient client;
         try {
             // connection should be lazy
+            // 为惰性连接，默认
             if (url.getParameter(LAZY_CONNECT_KEY, false)) {
                 client = new LazyConnectExchangeClient(url, requestHandler);
 
-            } else {
+            }
+            // 为实时连接
+            else {
                 client = Exchangers.connect(url, requestHandler);
             }
 

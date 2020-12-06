@@ -89,7 +89,9 @@ public class NettyClient extends AbstractClient {
      */
     @Override
     protected void doOpen() throws Throwable {
+        // 创建业务 handler
         final NettyClientHandler nettyClientHandler = new NettyClientHandler(getUrl(), this);
+        // 创建启动器并配置
         bootstrap = new Bootstrap();
         bootstrap.group(NIO_EVENT_LOOP_GROUP)
                 .option(ChannelOption.SO_KEEPALIVE, true)
@@ -99,6 +101,7 @@ public class NettyClient extends AbstractClient {
                 .channel(socketChannelClass());
 
         bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, Math.max(3000, getConnectTimeout()));
+        // 加 handler 到链接的管线
         bootstrap.handler(new ChannelInitializer<SocketChannel>() {
 
             @Override
@@ -111,9 +114,13 @@ public class NettyClient extends AbstractClient {
 
                 NettyCodecAdapter adapter = new NettyCodecAdapter(getCodec(), getUrl(), NettyClient.this);
                 ch.pipeline()//.addLast("logging",new LoggingHandler(LogLevel.INFO))//for debug
+                        // 解码器
                         .addLast("decoder", adapter.getDecoder())
+                        // 编码器
                         .addLast("encoder", adapter.getEncoder())
+                        // 心跳加检查
                         .addLast("client-idle-handler", new IdleStateHandler(heartbeatInterval, 0, 0, MILLISECONDS))
+                        // 框架内部使用
                         .addLast("handler", nettyClientHandler);
 
                 String socksProxyHost = ConfigUtils.getProperty(SOCKS_PROXY_HOST);

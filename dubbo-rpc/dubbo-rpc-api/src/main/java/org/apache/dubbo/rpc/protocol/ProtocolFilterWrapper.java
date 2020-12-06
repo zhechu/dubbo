@@ -77,6 +77,8 @@ public class ProtocolFilterWrapper implements Protocol {
      */
     private static <T> Invoker<T> buildInvokerChain(final Invoker<T> invoker, String key, String group) {
         Invoker<T> last = invoker;
+
+        // 获取所有激活的 Filter，然后使用链表方式形成责任链
         List<Filter> filters = ExtensionLoader.getExtensionLoader(Filter.class).getActivateExtension(invoker.getUrl(), key, group);
 
         if (!filters.isEmpty()) {
@@ -163,6 +165,7 @@ public class ProtocolFilterWrapper implements Protocol {
             }
         }
 
+        // 将责任链头部的Filter返回到ProtocolListenerWrapper
         return last;
     }
 

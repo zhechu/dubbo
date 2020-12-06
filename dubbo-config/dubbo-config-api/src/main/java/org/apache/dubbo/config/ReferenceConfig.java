@@ -293,6 +293,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
         serviceMetadata.getAttachments().putAll(map);
 
+        // 创建代理类
         ref = createProxy(map);
 
         serviceMetadata.setTarget(ref);
@@ -309,6 +310,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
     @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
     private T createProxy(Map<String, String> map) {
+        // 是否需打开本地引用
         if (shouldJvmRefer(map)) {
             URL url = new URL(LOCAL_PROTOCOL, LOCALHOST_VALUE, 0, interfaceClass.getName()).addParameters(map);
             invoker = REF_PROTOCOL.refer(interfaceClass, url);
@@ -317,6 +319,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
             }
         } else {
             urls.clear();
+            // 用户是否指定服务提供方地址：可以是服务提供方IP地址（直连方式）
             if (url != null && url.length() > 0) { // user specified URL, could be peer-to-peer address, or register center's address.
                 String[] us = SEMICOLON_SPLIT_PATTERN.split(url);
                 if (us != null && us.length > 0) {
@@ -332,7 +335,9 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                         }
                     }
                 }
-            } else { // assemble URL from register center's configuration
+            }
+            // 根据服务注册中心信息装配 URL 对象
+            else { // assemble URL from register center's configuration
                 // if protocols not injvm checkRegistry
                 if (!LOCAL_PROTOCOL.equalsIgnoreCase(getProtocol())) {
                     checkRegistry();
@@ -352,6 +357,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
                 }
             }
 
+            // 只有一个服务注册中心
             if (urls.size() == 1) {
                 invoker = REF_PROTOCOL.refer(interfaceClass, urls.get(0));
             } else {
@@ -377,6 +383,7 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
             }
         }
 
+        // 是否需在启动时检查服务提供方是否可用
         if (shouldCheck() && !invoker.isAvailable()) {
             invoker.destroy();
             throw new IllegalStateException("Failed to check the status of the service "

@@ -90,6 +90,9 @@ import static org.apache.dubbo.rpc.cluster.Constants.ROUTER_KEY;
 
 /**
  * RegistryDirectory
+ *
+ * 维护所有服务者的invoker列表，消费端发起远程调用时就是根据集群容错和负载均衡算法以及路由规则从invoker列表里选择一个进行调用的，
+ * 当服务提供者宕机的时候，ZooKeeper会通知更新这个invoker列表
  */
 public class RegistryDirectory<T> extends AbstractDirectory<T> implements NotifyListener {
 
@@ -178,6 +181,10 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
         return shouldRegister;
     }
 
+    /**
+     * 订阅服务提供者服务，并且把服务提供者所有的URL信息转换为invoker列表，并保存到RegistryDirectory
+     * @param url
+     */
     public void subscribe(URL url) {
         setConsumerUrl(url);
         CONSUMER_CONFIGURATION_LISTENER.addNotifyListener(this);
@@ -227,15 +234,18 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
 
     @Override
     public synchronized void notify(List<URL> urls) {
+        // 元数据分组后分别保存
         Map<String, List<URL>> categoryUrls = urls.stream()
                 .filter(Objects::nonNull)
                 .filter(this::isValidCategory)
                 .filter(this::isNotCompatibleFor26x)
                 .collect(Collectors.groupingBy(this::judgeCategory));
 
+        // 配置信息，如：降级信息
         List<URL> configuratorURLs = categoryUrls.getOrDefault(CONFIGURATORS_CATEGORY, Collections.emptyList());
         this.configurators = Configurator.toConfigurators(configuratorURLs).orElse(this.configurators);
 
+        // 路由信息收集并保存
         List<URL> routerURLs = categoryUrls.getOrDefault(ROUTERS_CATEGORY, Collections.emptyList());
         toRouters(routerURLs).ifPresent(this::addRouters);
 
