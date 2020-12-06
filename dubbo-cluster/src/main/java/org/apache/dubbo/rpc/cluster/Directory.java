@@ -30,6 +30,9 @@ import java.util.List;
  * <a href="http://en.wikipedia.org/wiki/Directory_service">Directory Service</a>
  *
  * @see org.apache.dubbo.rpc.cluster.Cluster#join(Directory)
+ *
+ * Directory代表了多个invoker（对于消费端来说，每个invoker代表了一个服务提供者），其内部维护着一个List，并且这个List的内容是动态变化的，
+ * 比如当服务提供者集群新增或者减少机器时，服务注册中心就会推送当前服务提供者的地址列表，然后Directory中的List就会根据服务提供者地址列表相应变化
  */
 public interface Directory<T> extends Node {
 

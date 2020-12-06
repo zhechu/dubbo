@@ -29,6 +29,12 @@ import java.util.stream.Collectors;
 
 /**
  * Router chain
+ *
+ * RouterChain里也保存了可用服务提供者对应的invokers列表和路由规则信息，
+ * 当服务消费方的集群容错策略要获取可用服务提供者对应的invoker列表时，
+ * 会调用RouterChain的route（）方法，其内部根据路由规则信息和invokers列表来提供服务
+ *
+ * 即RouterChain链是在消费端启动过程中通过RegistryProtocol的doRefer（）方法调用RegistryDirectory的buildRouterChain（）方法创建的
  */
 public class RouterChain<T> {
 
@@ -95,6 +101,7 @@ public class RouterChain<T> {
      */
     public List<Invoker<T>> route(URL url, Invocation invocation) {
         List<Invoker<T>> finalInvokers = invokers;
+        // 寻找符合路由规则的 invoker
         for (Router router : routers) {
             finalInvokers = router.route(finalInvokers, url, invocation);
         }

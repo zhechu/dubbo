@@ -232,6 +232,9 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
         }
     }
 
+    /**
+     * 当ZooKeeper服务端发现服务提供者地址列表发生变化后，会将地址列表推送到服务消费端，然后zkClient会回调该监听器的notify（）方法
+     */
     @Override
     public synchronized void notify(List<URL> urls) {
         // 元数据分组后分别保存
@@ -261,6 +264,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
                 providerURLs = addressListener.notify(providerURLs, getConsumerUrl(),this);
             }
         }
+        // 刷新服务提供者列表
         refreshOverrideAndInvoker(providerURLs);
     }
 
@@ -277,7 +281,9 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
 
     private void refreshOverrideAndInvoker(List<URL> urls) {
         // mock zookeeper://xxx?mock=return null
+        // 根据服务降级信息，重写 URL
         overrideDirectoryUrl();
+        // 刷新 invoker 列表
         refreshInvoker(urls);
     }
 
@@ -297,6 +303,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
     private void refreshInvoker(List<URL> invokerUrls) {
         Assert.notNull(invokerUrls, "invokerUrls should not be null");
 
+        // 只有一个服务提供者时
         if (invokerUrls.size() == 1
                 && invokerUrls.get(0) != null
                 && EMPTY_PROTOCOL.equals(invokerUrls.get(0).getProtocol())) {
@@ -319,6 +326,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
             if (invokerUrls.isEmpty()) {
                 return;
             }
+            // URL 转换为 invoker
             Map<String, Invoker<T>> newUrlInvokerMap = toInvokers(invokerUrls);// Translate url list to Invoker map
 
             /**

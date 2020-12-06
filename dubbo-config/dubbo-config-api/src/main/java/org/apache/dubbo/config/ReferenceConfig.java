@@ -84,6 +84,10 @@ import static org.apache.dubbo.rpc.cluster.Constants.REFER_KEY;
 /**
  * Please avoid using this class for any new application,
  * use {@link ReferenceConfigBase} instead.
+ *
+ * 在服务消费端应用中，每个需要消费的服务都被包装为ReferenceConfig，在应用启动时会调用每个服务对应的ReferenceConfig的get（）方法，
+ * 然后会为每个服务创建一个自己的RegistryDirectory对象，每个RegistryDirectory管理该服务提供者的地址列表、路由规则、动态配置等信息，
+ * 当服务提供者的信息发生变化时，RegistryDirectory会动态地得到变化通知，并自动更新
  */
 public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
 
