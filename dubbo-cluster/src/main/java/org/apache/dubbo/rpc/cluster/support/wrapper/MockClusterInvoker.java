@@ -36,6 +36,17 @@ import java.util.List;
 import static org.apache.dubbo.rpc.Constants.MOCK_KEY;
 import static org.apache.dubbo.rpc.cluster.Constants.INVOCATION_NEED_MOCK;
 
+/**
+ * 当服务消费者启动时，会去订阅com.books.dubbo.demo.api.GreetingService子树中的信息，
+ * 比如Providers（服务提供者列表）、Routes（路由信息）、Configurators（服务降级策略）等信息
+ *
+ * 当服务消费者发起远程调用时，会看是否设置了force：return降级策略，
+ * 如果设置了则不发起远程调用并直接返回mock值，否则发起远程调用。
+ * 当远程调用结果OK时，直接返回远程调用返回的结果；
+ * 如果远程调用失败了，则看当前是否设置了fail：return的降级策略，
+ * 如果设置了，则直接返回mock值，否则返回调用远程服务失败的具体原因
+ * @param <T>
+ */
 public class MockClusterInvoker<T> implements ClusterInvoker<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(MockClusterInvoker.class);
@@ -82,19 +93,26 @@ public class MockClusterInvoker<T> implements ClusterInvoker<T> {
     public Result invoke(Invocation invocation) throws RpcException {
         Result result = null;
 
+        // 查看 URL 是否有 mock 字段
         String value = getUrl().getMethodParameter(invocation.getMethodName(), MOCK_KEY, Boolean.FALSE.toString()).trim();
+        // 若没有或设置为 false 则表示未设置降级策略
         if (value.length() == 0 || "false".equalsIgnoreCase(value)) {
             //no mock
             result = this.invoker.invoke(invocation);
-        } else if (value.startsWith("force")) {
+        }
+        // 设置了 force:return 降级策略
+        else if (value.startsWith("force")) {
             if (logger.isWarnEnabled()) {
                 logger.warn("force-mock: " + invocation.getMethodName() + " force-mock enabled , url : " + getUrl());
             }
             //force:direct mock
             result = doMockInvoke(invocation, null);
-        } else {
+        }
+        // 设置了 fail:return 降级策略
+        else {
             //fail-mock
             try {
+                // 先发起远程调用
                 result = this.invoker.invoke(invocation);
 
                 //fix:#4585
@@ -103,6 +121,7 @@ public class MockClusterInvoker<T> implements ClusterInvoker<T> {
                     if(rpcException.isBiz()){
                         throw  rpcException;
                     }else {
+                        // 远程调用失败则使用降级策略
                         result = doMockInvoke(invocation, rpcException);
                     }
                 }
@@ -115,6 +134,7 @@ public class MockClusterInvoker<T> implements ClusterInvoker<T> {
                 if (logger.isWarnEnabled()) {
                     logger.warn("fail-mock: " + invocation.getMethodName() + " fail-mock enabled , url : " + getUrl(), e);
                 }
+                // 远程调用失败则使用降级策略
                 result = doMockInvoke(invocation, e);
             }
         }

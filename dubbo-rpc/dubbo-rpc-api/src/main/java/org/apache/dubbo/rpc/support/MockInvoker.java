@@ -162,11 +162,13 @@ final public class MockInvoker<T> implements Invoker<T> {
 
     @SuppressWarnings("unchecked")
     private Invoker<T> getInvoker(String mockService) {
+        // 缓存存在则直接返回
         Invoker<T> invoker = (Invoker<T>) MOCK_MAP.get(mockService);
         if (invoker != null) {
             return invoker;
         }
 
+        // 不存在则创建代理并缓存
         Class<T> serviceType = (Class<T>) ReflectUtils.forName(url.getServiceInterface());
         T mockObject = (T) getMockObject(mockService, serviceType);
         invoker = PROXY_FACTORY.getInvoker(mockObject, serviceType, url);
@@ -178,6 +180,7 @@ final public class MockInvoker<T> implements Invoker<T> {
 
     @SuppressWarnings("unchecked")
     public static Object getMockObject(String mockService, Class serviceType) {
+        // 若 mock 类型为 true 或 default
         boolean isDefault = ConfigUtils.isDefault(mockService);
         if (isDefault) {
             mockService = serviceType.getName() + "Mock";
@@ -185,6 +188,7 @@ final public class MockInvoker<T> implements Invoker<T> {
 
         Class<?> mockClass;
         try {
+            // 反射加载字节码创建 Class 对象
             mockClass = ReflectUtils.forName(mockService);
         } catch (Exception e) {
             if (!isDefault) {// does not check Spring bean if it is default config.
@@ -205,6 +209,7 @@ final public class MockInvoker<T> implements Invoker<T> {
                     " not implement interface " + serviceType.getName());
         }
 
+        // 创建实例并返回
         try {
             return mockClass.newInstance();
         } catch (InstantiationException e) {
