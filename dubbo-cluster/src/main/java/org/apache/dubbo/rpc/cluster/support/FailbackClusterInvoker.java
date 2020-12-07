@@ -50,6 +50,9 @@ public class FailbackClusterInvoker<T> extends AbstractClusterInvoker<T> {
 
     private static final Logger logger = LoggerFactory.getLogger(FailbackClusterInvoker.class);
 
+    /**
+     * 延迟5秒执行定时器
+     */
     private static final long RETRY_FAILED_PERIOD = 5;
 
     private final int retries;
@@ -69,11 +72,13 @@ public class FailbackClusterInvoker<T> extends AbstractClusterInvoker<T> {
         if (failbackTasksConfig <= 0) {
             failbackTasksConfig = DEFAULT_FAILBACK_TASKS;
         }
+        // 重试次数，默认 100
         retries = retriesConfig;
         failbackTasks = failbackTasksConfig;
     }
 
     private void addFailed(LoadBalance loadbalance, Invocation invocation, List<Invoker<T>> invokers, Invoker<T> lastInvoker) {
+        // 创建自定义定时器实例
         if (failTimer == null) {
             synchronized (this) {
                 if (failTimer == null) {
@@ -84,6 +89,7 @@ public class FailbackClusterInvoker<T> extends AbstractClusterInvoker<T> {
                 }
             }
         }
+        // 创建重试任务并启动
         RetryTimerTask retryTimerTask = new RetryTimerTask(loadbalance, invocation, invokers, lastInvoker, retries, RETRY_FAILED_PERIOD);
         try {
             failTimer.newTimeout(retryTimerTask, RETRY_FAILED_PERIOD, TimeUnit.SECONDS);
@@ -139,14 +145,19 @@ public class FailbackClusterInvoker<T> extends AbstractClusterInvoker<T> {
         @Override
         public void run(Timeout timeout) {
             try {
+                // 使用负载均衡器选择 invoker
                 Invoker<T> retryInvoker = select(loadbalance, invocation, invokers, Collections.singletonList(lastInvoker));
+                // 发起远端调用
                 lastInvoker = retryInvoker;
                 retryInvoker.invoke(invocation);
             } catch (Throwable e) {
                 logger.error("Failed retry to invoke method " + invocation.getMethodName() + ", waiting again.", e);
+                // 失败次数达到重试次数则不再调用
                 if ((++retryTimes) >= retries) {
                     logger.error("Failed retry times exceed threshold (" + retries + "), We have to abandon, invocation->" + invocation);
-                } else {
+                }
+                // 再次重试
+                else {
                     rePut(timeout);
                 }
             }

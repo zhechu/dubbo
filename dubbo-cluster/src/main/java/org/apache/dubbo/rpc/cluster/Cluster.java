@@ -30,6 +30,7 @@ import org.apache.dubbo.rpc.cluster.support.FailoverCluster;
  * <a href="http://en.wikipedia.org/wiki/Computer_cluster">Cluster</a>
  * <a href="http://en.wikipedia.org/wiki/Fault-tolerant_system">Fault-Tolerant</a>
  *
+ * 当服务消费方调用服务提供方的服务出现错误时，Dubbo提供了多种容错方案，默认模式为FailoverCluster，也就是失败重试
  */
 @SPI(Cluster.DEFAULT)
 public interface Cluster {

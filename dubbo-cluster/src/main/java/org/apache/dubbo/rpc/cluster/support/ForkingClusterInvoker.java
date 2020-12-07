@@ -65,8 +65,11 @@ public class ForkingClusterInvoker<T> extends AbstractClusterInvoker<T> {
         try {
             checkInvokers(invokers, invocation);
             final List<Invoker<T>> selected;
+            // 获取配置参数，默认是 2
             final int forks = getUrl().getParameter(FORKS_KEY, DEFAULT_FORKS);
+            // 超时时间，默认是 1000
             final int timeout = getUrl().getParameter(TIMEOUT_KEY, DEFAULT_TIMEOUT);
+            // 如果forks参数值小于等于0或者大于服务提供者机器的个数，则设置forks为提供者机器个数
             if (forks <= 0 || forks >= invokers.size()) {
                 selected = invokers;
             } else {
@@ -82,12 +85,14 @@ public class ForkingClusterInvoker<T> extends AbstractClusterInvoker<T> {
             RpcContext.getContext().setInvokers((List) selected);
             final AtomicInteger count = new AtomicInteger();
             final BlockingQueue<Object> ref = new LinkedBlockingQueue<>();
+            // 并行执行
             for (final Invoker<T> invoker : selected) {
                 executor.execute(() -> {
                     try {
                         Result result = invoker.invoke(invocation);
                         ref.offer(result);
                     } catch (Throwable e) {
+                        // 所有的 invoker 都失败则记录异常信息
                         int value = count.incrementAndGet();
                         if (value >= selected.size()) {
                             ref.offer(e);
@@ -96,6 +101,7 @@ public class ForkingClusterInvoker<T> extends AbstractClusterInvoker<T> {
                 });
             }
             try {
+                // 获取结果并返回
                 Object ret = ref.poll(timeout, TimeUnit.MILLISECONDS);
                 if (ret instanceof Throwable) {
                     Throwable e = (Throwable) ret;

@@ -23,6 +23,11 @@ import org.apache.dubbo.rpc.cluster.support.wrapper.AbstractCluster;
 /**
  * {@link FailoverClusterInvoker}
  *
+ * 失败重试
+ * 当服务消费方调用服务提供者失败后，会自动切换到其他服务提供者服务器进行重试，
+ * 这通常用于读操作或者具有幂等的写操作。
+ *
+ * 需要注意的是，重试会带来更长延迟。可以通过retries="2"来设置重试次数（不含第1次）
  */
 public class FailoverCluster extends AbstractCluster {
 

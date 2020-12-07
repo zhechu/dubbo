@@ -260,6 +260,9 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
         return doInvoke(invocation, invokers, loadbalance);
     }
 
+    /**
+     * 检查是否有线程调用了当前ReferenceConfig的destroy（）方法，销毁了当前消费者
+     */
     protected void checkWhetherDestroyed() {
         if (destroyed.get()) {
             throw new RpcException("Rpc cluster invoker for " + getInterface() + " on consumer " + NetUtils.getLocalHost()

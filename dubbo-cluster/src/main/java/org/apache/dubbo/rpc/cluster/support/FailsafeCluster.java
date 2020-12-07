@@ -23,6 +23,8 @@ import org.apache.dubbo.rpc.cluster.support.wrapper.AbstractCluster;
 /**
  * {@link FailsafeClusterInvoker}
  *
+ * 安全失败
+ * 当服务消费者调用服务出现异常时，直接忽略异常。这种模式通常用于写入审计日志等操作
  */
 public class FailsafeCluster extends AbstractCluster {
 

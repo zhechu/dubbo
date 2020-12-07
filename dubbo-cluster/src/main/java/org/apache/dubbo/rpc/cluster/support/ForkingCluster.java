@@ -23,6 +23,9 @@ import org.apache.dubbo.rpc.cluster.support.wrapper.AbstractCluster;
 /**
  * {@link ForkingClusterInvoker}
  *
+ * 并行调用
+ * 当消费方调用一个接口方法后，DubboClient会并行调用多个服务提供者的服务，只要其中有一个成功即返回。
+ * 这种模式通常用于实时性要求较高的读操作，但需要浪费更多服务资源
  */
 public class ForkingCluster extends AbstractCluster {
 
