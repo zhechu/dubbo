@@ -31,6 +31,12 @@ import java.util.concurrent.ThreadLocalRandom;
  * If there is only one invoker, use the invoker directly;
  * if there are multiple invokers and the weights are not the same, then random according to the total weight;
  * if there are multiple invokers and the same weight, then randomly called.
+ *
+ * 最少活跃调用数。如果每个提供者的活跃数相同，则随机选择一个。
+ * 在每个服务提供者里维护着一个活跃数计数器，用来记录当前同时处理请求的个数，也就是并发处理任务的个数。
+ * 这个值越小，说明当前服务提供者处理的速度越快或者当前机器的负载比较低，所以路由选择时就选择该活跃度最底的机器。
+ * 如果一个服务提供者处理速度很慢，由于堆积，那么同时处理的请求就比较多，也就是说活跃调用数目较大（活跃度较高），
+ * 这时，处理速度慢的提供者将收到更少的请求
  */
 public class LeastActiveLoadBalance extends AbstractLoadBalance {
 

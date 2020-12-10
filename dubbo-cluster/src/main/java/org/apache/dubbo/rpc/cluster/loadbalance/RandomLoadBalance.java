@@ -30,6 +30,8 @@ import java.util.concurrent.ThreadLocalRandom;
  * If the weights are different then it will use random.nextInt(w1 + w2 + ... + wn)
  * Note that if the performance of the machine is better than others, you can set a larger weight.
  * If the performance is not so good, you can set a smaller weight.
+ *
+ * 随机策略。按照概率设置权重，比较均匀，并且可以动态调节提供者的权重
  */
 public class RandomLoadBalance extends AbstractLoadBalance {
 
@@ -57,6 +59,9 @@ public class RandomLoadBalance extends AbstractLoadBalance {
         // The sum of weights
         int totalWeight = firstWeight;
         for (int i = 1; i < length; i++) {
+            // 如果所有服务提供者权重不一样，那么在正常情况下应该选择权重最大的提供者来提供服务，
+            // 但是Dubbo还考虑到另外一个因素，就是服务预热时间。如果服务提供者A的权重比服务提供者B的权重大，
+            // 但服务提供者A是刚启动的，而服务提供者B已经服务了一些时间，则这时候Dubbo会选择服务提供者B而不是服务提供者A来进行调用
             int weight = getWeight(invokers.get(i), invocation);
             // save for later use
             weights[i] = weight;
@@ -68,6 +73,7 @@ public class RandomLoadBalance extends AbstractLoadBalance {
         }
         if (totalWeight > 0 && !sameWeight) {
             // If (not every invoker has the same weight & at least one invoker's weight>0), select randomly based on totalWeight.
+            // Random在高并发下会导致大量线程竞争同一个原子变量，导致大量线程原地自旋，从而浪费CPU资源
             int offset = ThreadLocalRandom.current().nextInt(totalWeight);
             // Return a invoker based on the random value.
             for (int i = 0; i < length; i++) {

@@ -32,6 +32,9 @@ import java.util.List;
  * <a href="http://en.wikipedia.org/wiki/Load_balancing_(computing)">Load-Balancing</a>
  *
  * @see org.apache.dubbo.rpc.cluster.Cluster#join(Directory)
+ *
+ * 当服务提供方是集群时，为了避免大量请求一直集中在一个或者几个服务提供方机器上，从而使这些机器负载很高，甚至导致服务不可用，
+ * 需要做一定的负载均衡策略。Dubbo提供了多种均衡策略，默认为random，也就是每次随机调用一台服务提供者的服务
  */
 @SPI(RandomLoadBalance.NAME)
 public interface LoadBalance {
