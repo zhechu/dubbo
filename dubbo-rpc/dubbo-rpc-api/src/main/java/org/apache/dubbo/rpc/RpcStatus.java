@@ -34,8 +34,14 @@ public class RpcStatus {
 
     private static final ConcurrentMap<String, RpcStatus> SERVICE_STATISTICS = new ConcurrentHashMap<String, RpcStatus>();
 
+    /**
+     * key 为接口类，value 为 map
+     */
     private static final ConcurrentMap<String, ConcurrentMap<String, RpcStatus>> METHOD_STATISTICS = new ConcurrentHashMap<String, ConcurrentMap<String, RpcStatus>>();
     private final ConcurrentMap<String, Object> values = new ConcurrentHashMap<String, Object>();
+    /**
+     * 当前激活并发数
+     */
     private final AtomicInteger active = new AtomicInteger();
     private final AtomicLong total = new AtomicLong();
     private final AtomicInteger failed = new AtomicInteger();

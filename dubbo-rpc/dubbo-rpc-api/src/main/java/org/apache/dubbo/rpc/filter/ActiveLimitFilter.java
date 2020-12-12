@@ -50,14 +50,19 @@ public class ActiveLimitFilter implements Filter, Filter.Listener {
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
+        // 获取 URL 和调用方法名称
         URL url = invoker.getUrl();
         String methodName = invocation.getMethodName();
+        // 获取设置的最大活跃并发数，默认为0，表示无限制
         int max = invoker.getUrl().getMethodParameter(methodName, ACTIVES_KEY, 0);
+        // 根据URL和调用方法名获取对应方法的RPC状态对象
         final RpcStatus rpcStatus = RpcStatus.getStatus(invoker.getUrl(), invocation.getMethodName());
+        // 判断是不是超过并发限制
         if (!RpcStatus.beginCount(url, methodName, max)) {
             long timeout = invoker.getUrl().getMethodParameter(invocation.getMethodName(), TIMEOUT_KEY, 0);
             long start = System.currentTimeMillis();
             long remain = timeout;
+            // 超过并发限制则阻塞当前线程timeout时间
             synchronized (rpcStatus) {
                 while (!RpcStatus.beginCount(url, methodName, max)) {
                     try {
@@ -67,6 +72,7 @@ public class ActiveLimitFilter implements Filter, Filter.Listener {
                     }
                     long elapsed = System.currentTimeMillis() - start;
                     remain = timeout - elapsed;
+                    // 超时则抛出异常
                     if (remain <= 0) {
                         throw new RpcException(RpcException.LIMIT_EXCEEDED_EXCEPTION,
                                 "Waiting concurrent invoke timeout in client-side for service:  " +
@@ -80,6 +86,7 @@ public class ActiveLimitFilter implements Filter, Filter.Listener {
 
         invocation.put(ACTIVELIMIT_FILTER_START_TIME, System.currentTimeMillis());
 
+        // 正常调用
         return invoker.invoke(invocation);
     }
 
@@ -114,6 +121,11 @@ public class ActiveLimitFilter implements Filter, Filter.Listener {
         return beginTime != null ? System.currentTimeMillis() - (Long) beginTime : 0;
     }
 
+    /**
+     * 调用完成后通知所有被阻塞的请求
+     * @param rpcStatus
+     * @param max
+     */
     private void notifyFinish(final RpcStatus rpcStatus, int max) {
         if (max > 0) {
             synchronized (rpcStatus) {
