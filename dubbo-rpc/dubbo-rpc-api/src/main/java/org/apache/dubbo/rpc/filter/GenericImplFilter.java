@@ -73,6 +73,7 @@ public class GenericImplFilter implements Filter, Filter.Listener {
 
             String methodName = invocation2.getMethodName();
             Class<?>[] parameterTypes = invocation2.getParameterTypes();
+            // 获取泛化参数
             Object[] arguments = invocation2.getArguments();
 
             String[] types = new String[parameterTypes.length];
