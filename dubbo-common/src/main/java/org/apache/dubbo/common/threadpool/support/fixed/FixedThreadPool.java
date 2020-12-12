@@ -38,19 +38,31 @@ import static org.apache.dubbo.common.constants.CommonConstants.THREAD_NAME_KEY;
  * Creates a thread pool that reuses a fixed number of threads
  *
  * @see java.util.concurrent.Executors#newFixedThreadPool(int)
+ *
+ * 创建一个具有固定个数线程的线程池
  */
 public class FixedThreadPool implements ThreadPool {
 
     @Override
     public Executor getExecutor(URL url) {
+        // 获取用户设置的线程池中线程的名称前缀，如果没有设置，则使用默认名称Dubbo
         String name = url.getParameter(THREAD_NAME_KEY, DEFAULT_THREAD_NAME);
+        // 获取用户设置的线程池中线程的个数，如果没有设置，则使用默认的数值200
         int threads = url.getParameter(THREADS_KEY, DEFAULT_THREADS);
+        // 获取用户设置的线程池的阻塞队列大小，如果没有设置，则使用默认的数值0
         int queues = url.getParameter(QUEUES_KEY, DEFAULT_QUEUES);
-        return new ThreadPoolExecutor(threads, threads, 0, TimeUnit.MILLISECONDS,
-                queues == 0 ? new SynchronousQueue<Runnable>() :
+        return new ThreadPoolExecutor(
+            threads,
+            threads,
+            0,
+            TimeUnit.MILLISECONDS,
+            queues == 0 ? new SynchronousQueue<Runnable>() :
                         (queues < 0 ? new LinkedBlockingQueue<Runnable>()
                                 : new LinkedBlockingQueue<Runnable>(queues)),
-                new NamedInternalThreadFactory(name, true), new AbortPolicyWithReport(name, url));
+            new NamedInternalThreadFactory(name, true),
+            // 当线程池队列已满并且线程池中线程都忙碌时，新来的任务会被丢弃，并抛出RejectedExecutionException异常
+            new AbortPolicyWithReport(name, url)
+        );
     }
 
 }

@@ -40,20 +40,32 @@ import static org.apache.dubbo.common.constants.CommonConstants.THREAD_NAME_KEY;
 /**
  * Creates a thread pool that creates new threads as needed until limits reaches. This thread pool will not shrink
  * automatically.
+ *
+ * 创建一个线程池，这个线程池中的线程个数随着需要量动态增加，但是数量不超过配置的阈值。另外，空闲线程不会被回收，会一直存在
  */
 public class LimitedThreadPool implements ThreadPool {
 
     @Override
     public Executor getExecutor(URL url) {
+        // 获取用户设置的线程池中线程的名称前缀，如果没有设置，则使用默认名称Dubbo
         String name = url.getParameter(THREAD_NAME_KEY, DEFAULT_THREAD_NAME);
+        // 获取用户设置的线程池中核心线程的个数，如果没有设置，则使用默认的数值0
         int cores = url.getParameter(CORE_THREADS_KEY, DEFAULT_CORE_THREADS);
+        // 获取用户设置的线程池中最大线程的个数，如果没有设置，则使用默认的数值200
         int threads = url.getParameter(THREADS_KEY, DEFAULT_THREADS);
+        // 获取用户设置的线程池阻塞队列大小，如果没有设置，则使用默认的数值0
         int queues = url.getParameter(QUEUES_KEY, DEFAULT_QUEUES);
-        return new ThreadPoolExecutor(cores, threads, Long.MAX_VALUE, TimeUnit.MILLISECONDS,
-                queues == 0 ? new SynchronousQueue<Runnable>() :
+        return new ThreadPoolExecutor(
+            cores,
+            threads,
+            Long.MAX_VALUE,
+            TimeUnit.MILLISECONDS,
+            queues == 0 ? new SynchronousQueue<Runnable>() :
                         (queues < 0 ? new LinkedBlockingQueue<Runnable>()
                                 : new LinkedBlockingQueue<Runnable>(queues)),
-                new NamedInternalThreadFactory(name, true), new AbortPolicyWithReport(name, url));
+            new NamedInternalThreadFactory(name, true),
+            new AbortPolicyWithReport(name, url)
+        );
     }
 
 }
