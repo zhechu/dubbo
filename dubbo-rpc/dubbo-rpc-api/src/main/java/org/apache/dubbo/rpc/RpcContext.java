@@ -49,6 +49,12 @@ import static org.apache.dubbo.rpc.Constants.RETURN_KEY;
  *
  * @export
  * @see org.apache.dubbo.rpc.filter.ContextFilter
+ *
+ * 隐式传参实现原理
+ * 首先需要在服务消费端的AbstractClusterInvoker类的invoke（）方法内，把附加属性键值对放入RpcInvocation的attachments变量中，
+ * 然后经过网络传输到服务提供端；服务提供端则使用ContextFilter对请求进行拦截，并从RpcInvocation中获取attachments中的键值对，
+ * 接着使用RpcContext.getContext（）.setAttachment将键值对设置到上下文中，然后就可以在服务提供方服务实现类方法里使用
+ * RpcContext.getContext（）.getAttachment（）方法获取参数值了
  */
 public class RpcContext {
 
