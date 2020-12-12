@@ -43,6 +43,9 @@ public class InjvmProtocol extends AbstractProtocol implements Protocol {
     public static final String NAME = LOCAL_PROTOCOL;
 
     public static final int DEFAULT_PORT = 0;
+    /**
+     * 在整个JVM内对于每个扩展接口来说只会存在一个InjvmProtocol的实例，并且其中INSTANCE保存的就是这个实例对象
+     */
     private static InjvmProtocol INSTANCE;
 
     public InjvmProtocol() {

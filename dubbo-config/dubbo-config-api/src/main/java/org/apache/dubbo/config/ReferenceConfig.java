@@ -321,7 +321,9 @@ public class ReferenceConfig<T> extends ReferenceConfigBase<T> {
             if (logger.isInfoEnabled()) {
                 logger.info("Using injvm service " + interfaceClass.getName());
             }
-        } else {
+        }
+        // 引用远程服务
+        else {
             urls.clear();
             // 用户是否指定服务提供方地址：可以是服务提供方IP地址（直连方式）
             if (url != null && url.length() > 0) { // user specified URL, could be peer-to-peer address, or register center's address.
