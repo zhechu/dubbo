@@ -23,6 +23,13 @@ import org.apache.dubbo.remoting.transport.dispatcher.all.AllDispatcher;
 
 /**
  * ChannelHandlerWrapper (SPI, Singleton, ThreadSafe)
+ *
+ * 根据请求的消息类是被I/O线程处理还是被业务线程池处理，Dubbo提供了下面几种线程模型
+ * all（AllDispatcher类）：所有消息都派发到业务线程池，这些消息包括请求、响应、连接事件、断开事件、心跳事件等
+ * direct（DirectDispatcher类）：所有消息都不派发到业务线程池，全部在IO线程上直接执行
+ * message（MessageOnlyDispatcher类）：只有请求响应消息派发到业务线程池，其他消息如连接事件、断开事件、心跳事件等，直接在I/O线程上执行
+ * execution（ExecutionDispatcher类）：只把请求类消息派发到业务线程池处理，但是响应、连接事件、断开事件、心跳事件等消息直接在I/O线程上执行
+ * connection（ConnectionOrderedDispatcher类）：在I/O线程上将连接事件、断开事件放入队列，有序地逐个执行，其他消息派发到业务线程池处理
  */
 @SPI(AllDispatcher.NAME)
 public interface Dispatcher {

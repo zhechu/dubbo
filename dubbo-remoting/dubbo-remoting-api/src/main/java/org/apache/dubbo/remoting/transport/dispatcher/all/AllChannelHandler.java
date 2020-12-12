@@ -35,6 +35,11 @@ public class AllChannelHandler extends WrappedChannelHandler {
         super(handler, url);
     }
 
+    /**
+     * 连接完成事件，交给业务线程池处理
+     * @param channel
+     * @throws RemotingException
+     */
     @Override
     public void connected(Channel channel) throws RemotingException {
         ExecutorService executor = getExecutorService();
@@ -45,6 +50,11 @@ public class AllChannelHandler extends WrappedChannelHandler {
         }
     }
 
+    /**
+     * 连接断开事件，交给业务线程池处理
+     * @param channel
+     * @throws RemotingException
+     */
     @Override
     public void disconnected(Channel channel) throws RemotingException {
         ExecutorService executor = getExecutorService();
@@ -55,12 +65,19 @@ public class AllChannelHandler extends WrappedChannelHandler {
         }
     }
 
+    /**
+     * 请求响应事件，交给业务线程池处理
+     * @param channel
+     * @param message
+     * @throws RemotingException
+     */
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
         ExecutorService executor = getPreferredExecutorService(message);
         try {
             executor.execute(new ChannelEventRunnable(channel, handler, ChannelState.RECEIVED, message));
         } catch (Throwable t) {
+            // 解决线程池满后异常信息无法发送到对端BUG
         	if(message instanceof Request && t instanceof RejectedExecutionException){
                 sendFeedback(channel, (Request) message, t);
                 return;
@@ -69,6 +86,12 @@ public class AllChannelHandler extends WrappedChannelHandler {
         }
     }
 
+    /**
+     * 异常处理事件，交给业务线程池处理
+     * @param channel
+     * @param exception
+     * @throws RemotingException
+     */
     @Override
     public void caught(Channel channel, Throwable exception) throws RemotingException {
         ExecutorService executor = getExecutorService();
