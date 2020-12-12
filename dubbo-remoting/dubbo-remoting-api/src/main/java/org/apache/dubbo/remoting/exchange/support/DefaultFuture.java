@@ -48,10 +48,16 @@ public class DefaultFuture extends CompletableFuture<Object> {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultFuture.class);
 
+    /**
+     * 通道缓存
+     */
     private static final Map<Long, Channel> CHANNELS = new ConcurrentHashMap<>();
 
     private static final Map<Long, DefaultFuture> FUTURES = new ConcurrentHashMap<>();
 
+    /**
+     * 超时检查定时器
+     */
     public static final Timer TIME_OUT_TIMER = new HashedWheelTimer(
             new NamedThreadFactory("dubbo-future-timeout", true),
             30,
@@ -77,9 +83,13 @@ public class DefaultFuture extends CompletableFuture<Object> {
     }
 
     private DefaultFuture(Channel channel, Request request, int timeout) {
+        // 保存通信通道
         this.channel = channel;
+        // 保存请求
         this.request = request;
+        // 保存请求id
         this.id = request.getId();
+        // 保存超时时间
         this.timeout = timeout > 0 ? timeout : channel.getUrl().getPositiveParameter(TIMEOUT_KEY, DEFAULT_TIMEOUT);
         // put into waiting map.
         FUTURES.put(id, this);
@@ -91,6 +101,7 @@ public class DefaultFuture extends CompletableFuture<Object> {
      */
     private static void timeoutCheck(DefaultFuture future) {
         TimeoutCheckTask task = new TimeoutCheckTask(future.getId());
+        // 创建定时任务
         future.timeoutCheckTask = TIME_OUT_TIMER.newTimeout(task, future.getTimeout(), TimeUnit.MILLISECONDS);
     }
 
