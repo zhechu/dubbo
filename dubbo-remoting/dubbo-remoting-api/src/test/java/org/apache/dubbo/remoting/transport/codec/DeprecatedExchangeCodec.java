@@ -44,6 +44,7 @@ final class DeprecatedExchangeCodec extends DeprecatedTelnetCodec implements Cod
     // header length.
     protected static final int HEADER_LENGTH = 16;
     // magic header.
+    // 魔数
     protected static final short MAGIC = (short) 0xdabb;
     protected static final byte MAGIC_HIGH = Bytes.short2bytes(MAGIC)[0];
     protected static final byte MAGIC_LOW = Bytes.short2bytes(MAGIC)[1];

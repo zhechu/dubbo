@@ -65,11 +65,16 @@ public class ExchangeCodec extends TelnetCodec {
 
     @Override
     public void encode(Channel channel, ChannelBuffer buffer, Object msg) throws IOException {
+        // 对请求信息进行编码
         if (msg instanceof Request) {
             encodeRequest(channel, buffer, (Request) msg);
-        } else if (msg instanceof Response) {
+        }
+        // 对响应信息进行编码
+        else if (msg instanceof Response) {
             encodeResponse(channel, buffer, (Response) msg);
-        } else {
+        }
+        // 对其他信息进行编码
+        else {
             super.encode(channel, buffer, msg);
         }
     }
@@ -208,6 +213,7 @@ public class ExchangeCodec extends TelnetCodec {
     }
 
     protected void encodeRequest(Channel channel, ChannelBuffer buffer, Request req) throws IOException {
+        // 获取序列化扩展实现
         Serialization serialization = getSerialization(channel);
         // header.
         byte[] header = new byte[HEADER_LENGTH];
@@ -228,6 +234,7 @@ public class ExchangeCodec extends TelnetCodec {
         Bytes.long2bytes(req.getId(), header, 4);
 
         // encode request data.
+        // 获取的序列化方式对象数据部分进行编码，并把协议数据部分写入缓存（buffer）
         int savedWriteIndex = buffer.writerIndex();
         buffer.writerIndex(savedWriteIndex + HEADER_LENGTH);
         ChannelBufferOutputStream bos = new ChannelBufferOutputStream(buffer);
@@ -244,6 +251,7 @@ public class ExchangeCodec extends TelnetCodec {
         bos.flush();
         bos.close();
         int len = bos.writtenBytes();
+        // 检查协议数据部分是否合法
         checkPayload(channel, len);
         Bytes.int2bytes(len, header, 12);
 
