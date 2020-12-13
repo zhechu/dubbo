@@ -81,6 +81,7 @@ public class ExchangeCodec extends TelnetCodec {
 
     @Override
     public Object decode(Channel channel, ChannelBuffer buffer) throws IOException {
+        // 将 Dubbo 协议头读取到数组 header
         int readable = buffer.readableBytes();
         byte[] header = new byte[Math.min(readable, HEADER_LENGTH)];
         buffer.readBytes(header);
@@ -115,6 +116,7 @@ public class ExchangeCodec extends TelnetCodec {
         int len = Bytes.bytes2int(header, 12);
         checkPayload(channel, len);
 
+        // 若遇到半包则直接返回
         int tt = len + HEADER_LENGTH;
         if (readable < tt) {
             return DecodeResult.NEED_MORE_INPUT;
@@ -123,6 +125,7 @@ public class ExchangeCodec extends TelnetCodec {
         // limit input stream.
         ChannelBufferInputStream is = new ChannelBufferInputStream(buffer, len);
 
+        // 解析协议数据部分
         try {
             return decodeBody(channel, is, header);
         } finally {
@@ -156,11 +159,16 @@ public class ExchangeCodec extends TelnetCodec {
                 ObjectInput in = CodecSupport.deserialize(channel.getUrl(), is, proto);
                 if (status == Response.OK) {
                     Object data;
+                    // 解码心跳数据
                     if (res.isHeartbeat()) {
                         data = decodeHeartbeatData(channel, in);
-                    } else if (res.isEvent()) {
+                    }
+                    // 解码事件
+                    else if (res.isEvent()) {
                         data = decodeEventData(channel, in);
-                    } else {
+                    }
+                    // 解码响应信息
+                    else {
                         data = decodeResponseData(channel, in, getRequestData(id));
                     }
                     res.setResult(data);
@@ -187,7 +195,9 @@ public class ExchangeCodec extends TelnetCodec {
                     data = decodeHeartbeatData(channel, in);
                 } else if (req.isEvent()) {
                     data = decodeEventData(channel, in);
-                } else {
+                }
+                // 解码请求信息
+                else {
                     data = decodeRequestData(channel, in);
                 }
                 req.setData(data);

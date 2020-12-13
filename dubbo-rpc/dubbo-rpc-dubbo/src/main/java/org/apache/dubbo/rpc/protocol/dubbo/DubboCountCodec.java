@@ -40,16 +40,28 @@ public final class DubboCountCodec implements Codec2 {
         codec.encode(channel, buffer, msg);
     }
 
+    /**
+     * 使用“自定义协议header+body”的方式来解决粘包、半包问题，其中header记录了body的大小，这种方式便于协议的升级。
+     * 在读取header后，message的读取指针已经后移，如果后面发现出现了半包现象，则需要把读取指针重置
+     * @param channel
+     * @param buffer
+     * @return
+     * @throws IOException
+     */
     @Override
     public Object decode(Channel channel, ChannelBuffer buffer) throws IOException {
         int save = buffer.readerIndex();
         MultiMessage result = MultiMessage.create();
+        // 具体解析二进制位Dubbo协议帧对象
         do {
+            // 解析二进制数据为对象
             Object obj = codec.decode(channel, buffer);
+            // 若返回 NEED_MORE_INPUT，则表示遇到半包，重置缓存的读取下标
             if (Codec2.DecodeResult.NEED_MORE_INPUT == obj) {
                 buffer.readerIndex(save);
                 break;
             } else {
+                // 将解码成功的对象保存
                 result.addMessage(obj);
                 logMessageLength(obj, buffer.readerIndex() - save);
                 save = buffer.readerIndex();
